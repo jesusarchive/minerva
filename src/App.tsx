@@ -1,9 +1,11 @@
-import './App.css';
+import ChatPage from './pages/chat-page';
 
 function App() {
   return (
     <div>
-      <h1>Minerva</h1>
+      <main>
+        <ChatPage />
+      </main>
     </div>
   );
 }
