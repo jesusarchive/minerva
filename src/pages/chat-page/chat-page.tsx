@@ -33,6 +33,7 @@ export default function ChatPage() {
     event.preventDefault();
 
     if (message) {
+      // TODO: differentiate between commands and messages, commands start with /
       const element = {
         date: new Date(),
         user,
