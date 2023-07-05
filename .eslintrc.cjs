@@ -9,6 +9,14 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
   plugins: ['simple-import-sort', 'import', 'unused-imports', 'react-refresh'],
+  settings: {
+    'import/resolver': {
+      node: {
+        paths: ['src'],
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      },
+    },
+  },
   rules: {
     // error prevention
     'array-callback-return': ['error', { checkForEach: true }],
