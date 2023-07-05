@@ -21,7 +21,7 @@ export default function Feed({ feed }: FeedProps) {
             {/* TIME */}
             <span>{time}</span>
 
-            {/* STATUS */}
+            {/* STATUS MESSAGE INDICATOR */}
             {el.status && (
               <div>
                 <span className="text-blue-700">-</span>
@@ -30,7 +30,7 @@ export default function Feed({ feed }: FeedProps) {
               </div>
             )}
 
-            {/* USER */}
+            {/* USER NICK */}
             {el.user && <span>{`<${el.user.nick}>`}</span>}
 
             {/* MESSAGE */}
