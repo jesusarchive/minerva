@@ -57,7 +57,7 @@ export default function ChatPage() {
   }, []);
 
   return (
-    <article className="flex flex-col h-screen bg-white dark:bg-black dark:text-white font-mono">
+    <article className="flex flex-col h-screen w-full bg-white dark:bg-black dark:text-white font-mono">
       {/* ROOT STATUS BAR */}
       <StatusBar>
         <span>{window.topic}</span>
