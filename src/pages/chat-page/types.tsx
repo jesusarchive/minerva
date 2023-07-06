@@ -19,11 +19,10 @@ export type ChannelType = {
   mode: string;
 };
 
-type FeedElementTypes = (typeof FEED_ELEMENT_TYPE)[keyof typeof FEED_ELEMENT_TYPE];
-
-type FeedElementType = {
+export type FeedElementType = {
+  id: string;
   date: Date;
-  type: FeedElementTypes;
+  type: (typeof FEED_ELEMENT_TYPE)[keyof typeof FEED_ELEMENT_TYPE];
   user?: UserType;
   message: string;
 };

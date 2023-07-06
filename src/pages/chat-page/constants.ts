@@ -10,6 +10,10 @@ export const MODE = {
   AI: 'AI',
 } as const;
 
+// COMMANDS
+export const COMMAND_PREFIX = '/';
+
+// Available commands
 export const COMMAND = {
   // Scrolls up the text in the window and fills the window with blank lines; you may want to use this to make new text start at the top of the window again.
   CLEAR: 'CLEAR',

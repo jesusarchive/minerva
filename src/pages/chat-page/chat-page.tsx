@@ -1,9 +1,17 @@
 import { ConversationChain } from 'langchain/chains';
 import React, { useEffect, useState } from 'react';
 
-import { FEED_ELEMENT_TYPE, MODE } from './constants';
+import { COMMAND, COMMAND_PREFIX, FEED_ELEMENT_TYPE, MODE } from './constants';
 import Feed from './feed';
-import { aiUser, channel, chatWindow, getTimeString, network, newUser } from './helpers';
+import {
+  aiUser,
+  channel,
+  chatWindow,
+  generateFeedElement,
+  getTimeString,
+  network,
+  newUser,
+} from './helpers';
 import StatusBar from './status-bar';
 import { FeedType, UserType } from './types';
 
@@ -18,26 +26,23 @@ export default function ChatPage({ chain }: ChatPageProps) {
   const clock = getTimeString();
 
   const init = () => {
-    const feedElement = {
-      date: new Date(),
+    const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.STATUS,
       message: `${user.nick} has joined #${channel.name}`,
-    };
+    });
     setFeed([feedElement]);
   };
 
-  // OPENAI
   const interact = async (message: string) => {
     const data = await chain.call({ input: message });
 
-    const aiFeed = {
-      date: new Date(),
+    const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.MESSAGE,
       user: aiUser,
       message: data.response,
-    };
+    });
 
-    setFeed([...feed, aiFeed]);
+    setFeed([...feed, feedElement]);
   };
 
   const handleFeedChange = async () => {
@@ -57,16 +62,108 @@ export default function ChatPage({ chain }: ChatPageProps) {
     setUserInput('');
   };
 
+  // COMMAND HANDLERS
+  const handleNickCommand = (command: string) => {
+    const nick = command.split(' ')[1];
+    const feedElement = generateFeedElement({
+      type: FEED_ELEMENT_TYPE.STATUS,
+      message: `${user.nick} is now known as ${nick}`,
+    });
+    setUser({ ...user, nick });
+    setFeed([...feed, feedElement]);
+  };
+
+  const handleClearCommand = () => {
+    // ! provisional, split feed into raw and processed
+    setFeed([]);
+  };
+
+  const handleHelpCommand = () => {
+    const feedElement = {
+      date: new Date(),
+      type: FEED_ELEMENT_TYPE.STATUS,
+      message: `Available commands: ${Object.values(COMMAND).join(', ')}`,
+    };
+    setFeed([...feed, feedElement]);
+  };
+
+  const handleInfoCommand = () => {
+    const feedElement = {
+      date: new Date(),
+      type: FEED_ELEMENT_TYPE.STATUS,
+      message: `User: ${user.nick}(${user.mode})`,
+    };
+    setFeed([...feed, feedElement]);
+  };
+
+  const handleMotdCommand = () => {
+    const feedElement = {
+      date: new Date(),
+      type: FEED_ELEMENT_TYPE.STATUS,
+      message: `Welcome to Minerva chat!`,
+    };
+    setFeed([...feed, feedElement]);
+  };
+
+  const handleRawLogCommand = () => {
+    // downloads raw log of all messages
+    const feedElement = {
+      date: new Date(),
+      type: FEED_ELEMENT_TYPE.STATUS,
+      message: `Raw log downloaded`,
+    };
+    setFeed([...feed, feedElement]);
+  };
+
+  const handleRestartCommand = () => {
+    // restarts langchain interaction
+    const feedElement = {
+      date: new Date(),
+      type: FEED_ELEMENT_TYPE.STATUS,
+      message: `Restarting langchain interaction`,
+    };
+    setFeed([...feed, feedElement]);
+  };
+
+  const handleTopicCommand = () => {};
+
+  const handleVoiceCommand = () => {};
+
+  const handleQuitCommand = () => {
+    // quits chat
+    const feedElement = {
+      date: new Date(),
+      type: FEED_ELEMENT_TYPE.STATUS,
+      message: `Quitting chat`,
+    };
+    setFeed([...feed, feedElement]);
+  };
+
+  const commandHandlers = {
+    [COMMAND.CLEAR]: handleClearCommand,
+    [COMMAND.HELP]: handleHelpCommand,
+    [COMMAND.INFO]: handleInfoCommand,
+    [COMMAND.MOTD]: handleMotdCommand,
+    [COMMAND.NICK]: handleNickCommand,
+    [COMMAND.RAWLOG]: handleRawLogCommand,
+    [COMMAND.RESTART]: handleRestartCommand,
+    [COMMAND.TOPIC]: handleTopicCommand,
+    [COMMAND.VOICE]: handleVoiceCommand,
+    [COMMAND.QUIT]: handleQuitCommand,
+  };
+
+  // USER INPUT HANDLERS
   const handleUserCommand = (command: string) => {
-    // change user nick
-    if (command.startsWith('/NICK')) {
-      const nick = command.split(' ')[1];
-      const feedElement = {
-        date: new Date(),
+    const formattedCommand = command.toUpperCase().split(' ')[0].slice(1);
+    const handler = commandHandlers[formattedCommand];
+
+    if (handler) {
+      handler?.(command);
+    } else {
+      const feedElement = generateFeedElement({
         type: FEED_ELEMENT_TYPE.STATUS,
-        message: `${user.nick} is now known as ${nick}`,
-      };
-      setUser({ ...user, nick });
+        message: `Command not found`,
+      });
       setFeed([...feed, feedElement]);
     }
 
@@ -74,14 +171,13 @@ export default function ChatPage({ chain }: ChatPageProps) {
   };
 
   const handleUserMessage = (message: string) => {
-    const userFeed = {
-      date: new Date(),
+    const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.MESSAGE,
       user,
       message,
-    };
-    setFeed([...feed, userFeed]);
-    setUserInput('');
+    });
+
+    setFeed([...feed, feedElement]);
     clearUserInput();
   };
 
@@ -92,7 +188,7 @@ export default function ChatPage({ chain }: ChatPageProps) {
   const handleUserInputSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const isCommand = userInput && userInput.startsWith('/');
+    const isCommand = userInput && userInput.startsWith(COMMAND_PREFIX);
     const isMessage = userInput && !isCommand;
 
     if (isCommand) {
@@ -108,6 +204,7 @@ export default function ChatPage({ chain }: ChatPageProps) {
     }
   };
 
+  // EFFECTS
   useEffect(() => {
     init();
   }, []);
@@ -117,7 +214,7 @@ export default function ChatPage({ chain }: ChatPageProps) {
   }, [feed]);
 
   return (
-    <article className="flex flex-col h-screen w-full bg-white dark:bg-black dark:text-white font-mono">
+    <article className="h-screen w-full flex flex-col bg-white dark:bg-black dark:text-white font-mono">
       {/* ROOT STATUS BAR */}
       <StatusBar>
         <span>{chatWindow.topic}</span>
@@ -144,17 +241,15 @@ export default function ChatPage({ chain }: ChatPageProps) {
       </StatusBar>
 
       {/* ACTIVE WINDOW INDICATOR */}
-      <div>
-        <form onSubmit={handleUserInputSubmit}>
-          <div className="flex space-x-2">
-            <span>{`[#${channel.name}]`}</span>
-            <input
-              className="bg-inherit border-0 w-full"
-              type="text"
-              value={userInput}
-              onChange={handleUserInputChange}
-            />
-          </div>
+      <div className="flex space-x-2">
+        <span>{`[#${channel.name}]`}</span>
+        <form className="w-full" onSubmit={handleUserInputSubmit}>
+          <input
+            className="bg-inherit border-0 w-full"
+            type="text"
+            value={userInput}
+            onChange={handleUserInputChange}
+          />
         </form>
       </div>
     </article>
