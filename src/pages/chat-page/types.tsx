@@ -1,3 +1,5 @@
+import { FEED_ELEMENT_TYPE } from './constants';
+
 export type UserType = {
   nick: string;
   mode: string;
@@ -17,10 +19,11 @@ export type ChannelType = {
   mode: string;
 };
 
+type FeedElementTypes = (typeof FEED_ELEMENT_TYPE)[keyof typeof FEED_ELEMENT_TYPE];
+
 type FeedElementType = {
   date: Date;
-  // used for status messages
-  status?: boolean;
+  type: FeedElementTypes;
   user?: UserType;
   message: string;
 };
