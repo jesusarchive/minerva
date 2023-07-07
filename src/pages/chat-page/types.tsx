@@ -24,7 +24,8 @@ export type FeedElementType = {
   date: Date;
   type: (typeof FEED_ELEMENT_TYPE)[keyof typeof FEED_ELEMENT_TYPE];
   user?: UserType;
-  message: string;
+  text: string;
+  preformatted?: boolean;
 };
 
 export type FeedType = FeedElementType[];

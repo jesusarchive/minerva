@@ -37,5 +37,13 @@ export const COMMAND = {
   QUIT: 'QUIT',
 };
 
+// Voice commands
+export const VOICE_COMMAND = {
+  // Activates the voice mode
+  ON: 'ON',
+  // Deactivates the voice mode
+  OFF: 'OFF',
+};
+
 export const MINERVA = 'Minerva';
 export const DEFAULT_USER_NICK = 'Anonymous';

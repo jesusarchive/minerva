@@ -9,6 +9,8 @@ type FeedProps = {
 };
 
 export default function Feed({ feed }: FeedProps) {
+  console.log(feed);
+
   return (
     <>
       {feed.map((el, i) => {
@@ -20,7 +22,7 @@ export default function Feed({ feed }: FeedProps) {
 
             {/* STATUS MESSAGE INDICATOR */}
             {el.type === FEED_ELEMENT_TYPE.STATUS && (
-              <div>
+              <div className="flex">
                 <span className="text-blue-700">-</span>
                 <span>!</span>
                 <span className="text-blue-700">-</span>
@@ -28,8 +30,7 @@ export default function Feed({ feed }: FeedProps) {
             )}
 
             {el.user && <span>{`<${el.user.nick}>`}</span>}
-
-            <p>{el.message}</p>
+            {el.preformatted ? <pre>{el.text}</pre> : <p>{el.text}</p>}
           </div>
         );
       })}

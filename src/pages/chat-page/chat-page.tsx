@@ -1,48 +1,60 @@
-import { ConversationChain } from 'langchain/chains';
 import React, { useEffect, useState } from 'react';
 
-import { COMMAND, COMMAND_PREFIX, FEED_ELEMENT_TYPE, MODE } from './constants';
+import useAi from '../../hooks/use-ai';
+import useVoice from '../../hooks/use-voice';
+import { COMMAND, COMMAND_PREFIX, FEED_ELEMENT_TYPE, MODE, VOICE_COMMAND } from './constants';
 import Feed from './feed';
 import {
   aiUser,
   channel,
   chatWindow,
+  downloadRawLog,
   generateFeedElement,
   getTimeString,
   network,
   newUser,
+  statusMessage,
 } from './helpers';
 import StatusBar from './status-bar';
 import { FeedType, UserType } from './types';
 
-type ChatPageProps = {
-  chain: ConversationChain;
-};
-
-export default function ChatPage({ chain }: ChatPageProps) {
+export default function ChatPage() {
+  const ai = useAi();
+  const { speak } = useVoice();
   const [user, setUser] = useState<UserType>(newUser);
   const [feed, setFeed] = useState<FeedType>([]);
   const [userInput, setUserInput] = useState<string>('');
   const clock = getTimeString();
+  const [voiceActive, setVoiceActive] = useState<boolean>(false);
 
   const init = () => {
-    const feedElement = generateFeedElement({
-      type: FEED_ELEMENT_TYPE.STATUS,
-      message: `${user.nick} has joined #${channel.name}`,
-    });
-    setFeed([feedElement]);
+    const initialFeed = [
+      generateFeedElement({
+        type: FEED_ELEMENT_TYPE.STATUS,
+        text: statusMessage.welcome,
+      }),
+    ];
+    setFeed(initialFeed);
   };
 
   const interact = async (message: string) => {
-    const data = await chain.call({ input: message });
+    if (!ai) {
+      return;
+    }
+
+    const data = await ai.call({ input: message });
 
     const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.MESSAGE,
       user: aiUser,
-      message: data.response,
+      text: data.response,
     });
 
     setFeed([...feed, feedElement]);
+
+    if (voiceActive) {
+      speak(data.response);
+    }
   };
 
   const handleFeedChange = async () => {
@@ -54,7 +66,7 @@ export default function ChatPage({ chain }: ChatPageProps) {
       lastFeedEl?.user?.mode !== MODE.AI;
 
     if (isUserMessage) {
-      await interact(lastFeedEl.message);
+      await interact(lastFeedEl.text);
     }
   };
 
@@ -67,7 +79,7 @@ export default function ChatPage({ chain }: ChatPageProps) {
     const nick = command.split(' ')[1];
     const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.STATUS,
-      message: `${user.nick} is now known as ${nick}`,
+      text: `${user.nick} is now known as ${nick}`,
     });
     setUser({ ...user, nick });
     setFeed([...feed, feedElement]);
@@ -79,67 +91,74 @@ export default function ChatPage({ chain }: ChatPageProps) {
   };
 
   const handleHelpCommand = () => {
-    const feedElement = {
-      date: new Date(),
+    const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.STATUS,
-      message: `Available commands: ${Object.values(COMMAND).join(', ')}`,
-    };
+      text: `Available commands: ${Object.values(COMMAND).join(', ')}`,
+    });
     setFeed([...feed, feedElement]);
   };
 
   const handleInfoCommand = () => {
-    const feedElement = {
-      date: new Date(),
+    const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.STATUS,
-      message: `User: ${user.nick}(${user.mode})`,
-    };
+      text: "Minerva is an AI chatbot that you can talk to developed with GPT-3's Davinci engine.",
+    });
     setFeed([...feed, feedElement]);
   };
 
   const handleMotdCommand = () => {
-    const feedElement = {
-      date: new Date(),
+    // shows welcome message
+    const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.STATUS,
-      message: `Welcome to Minerva chat!`,
-    };
+      text: statusMessage.welcome,
+    });
     setFeed([...feed, feedElement]);
   };
 
   const handleRawLogCommand = () => {
-    // downloads raw log of all messages
-    const feedElement = {
-      date: new Date(),
+    downloadRawLog(feed);
+    const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.STATUS,
-      message: `Raw log downloaded`,
-    };
+      text: 'Raw log downloaded.',
+    });
     setFeed([...feed, feedElement]);
   };
 
   const handleRestartCommand = () => {
-    // restarts langchain interaction
-    const feedElement = {
-      date: new Date(),
-      type: FEED_ELEMENT_TYPE.STATUS,
-      message: `Restarting langchain interaction`,
-    };
-    setFeed([...feed, feedElement]);
+    window.location.reload();
   };
 
   const handleTopicCommand = () => {};
 
-  const handleVoiceCommand = () => {};
+  const voiceCommandHandler = {
+    [VOICE_COMMAND.ON]: () => setVoiceActive(true),
+    [VOICE_COMMAND.OFF]: () => setVoiceActive(false),
+  };
 
-  const handleQuitCommand = () => {
-    // quits chat
-    const feedElement = {
-      date: new Date(),
+  const handleVoiceCommand = (command: string) => {
+    const voiceStatus = command.split(' ')[1];
+    if (!voiceCommandHandler[voiceStatus]) {
+      // TODO: Add command not found
+      return;
+    }
+
+    voiceCommandHandler[voiceStatus]();
+    const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.STATUS,
-      message: `Quitting chat`,
-    };
+      text: `Voice is now ${voiceStatus}`,
+    });
     setFeed([...feed, feedElement]);
   };
 
-  const commandHandlers = {
+  const handleQuitCommand = () => {
+    const feedElement = generateFeedElement({
+      type: FEED_ELEMENT_TYPE.STATUS,
+      text: statusMessage.goodbye,
+    });
+    setFeed([...feed, feedElement]);
+  };
+
+  const commandHandler = {
     [COMMAND.CLEAR]: handleClearCommand,
     [COMMAND.HELP]: handleHelpCommand,
     [COMMAND.INFO]: handleInfoCommand,
@@ -155,14 +174,14 @@ export default function ChatPage({ chain }: ChatPageProps) {
   // USER INPUT HANDLERS
   const handleUserCommand = (command: string) => {
     const formattedCommand = command.toUpperCase().split(' ')[0].slice(1);
-    const handler = commandHandlers[formattedCommand];
+    const handler = commandHandler[formattedCommand];
 
     if (handler) {
       handler?.(command);
     } else {
       const feedElement = generateFeedElement({
         type: FEED_ELEMENT_TYPE.STATUS,
-        message: `Command not found`,
+        text: `Command not found`,
       });
       setFeed([...feed, feedElement]);
     }
@@ -170,11 +189,11 @@ export default function ChatPage({ chain }: ChatPageProps) {
     clearUserInput();
   };
 
-  const handleUserMessage = (message: string) => {
+  const handleUserText = (text: string) => {
     const feedElement = generateFeedElement({
       type: FEED_ELEMENT_TYPE.MESSAGE,
       user,
-      message,
+      text,
     });
 
     setFeed([...feed, feedElement]);
@@ -198,7 +217,7 @@ export default function ChatPage({ chain }: ChatPageProps) {
     }
 
     if (isMessage) {
-      handleUserMessage(userInput);
+      handleUserText(userInput);
 
       return;
     }
@@ -240,12 +259,13 @@ export default function ChatPage({ chain }: ChatPageProps) {
         </StatusBar.Block>
       </StatusBar>
 
-      {/* ACTIVE WINDOW INDICATOR */}
+      {/* USER INPUT */}
       <div className="flex space-x-2">
         <span>{`[#${channel.name}]`}</span>
         <form className="w-full" onSubmit={handleUserInputSubmit}>
           <input
             className="bg-inherit border-0 w-full"
+            autoFocus
             type="text"
             value={userInput}
             onChange={handleUserInputChange}
