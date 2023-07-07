@@ -1,16 +1,14 @@
 import React from 'react';
 
-import { FEED_ELEMENT_TYPE } from './constants';
-import { getTimeString } from './helpers';
-import { FeedType } from './types';
+import { FEED_ELEMENT_TYPE } from '../constants';
+import { getTimeString } from '../helpers';
+import { FeedType } from '../types';
 
 type FeedProps = {
   feed: FeedType;
 };
 
 export default function Feed({ feed }: FeedProps) {
-  console.log(feed);
-
   return (
     <>
       {feed.map((el, i) => {
