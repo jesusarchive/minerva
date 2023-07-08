@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { statusMessage } from '../data/config';
+import { statusMessage } from '@/data/config';
 
 type UseVoiceProps = {
   defaultVoiceActive?: boolean;

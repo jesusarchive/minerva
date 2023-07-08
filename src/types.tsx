@@ -1,4 +1,4 @@
-import { FEED_ELEMENT_TYPE, MODE, USER_TYPE } from './data/constants';
+import { FEED_ELEMENT_TYPE, MODE, USER_TYPE } from '@/data/constants';
 
 export type ModeType = (typeof MODE)[keyof typeof MODE];
 

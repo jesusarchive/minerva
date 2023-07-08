@@ -1,7 +1,7 @@
-import { statusMessage } from '../data/config';
-import { COMMAND, MODE, VOICE_COMMAND } from '../data/constants';
-import { FeedType, ModeType } from '../types';
-import { downloadRawLog } from '../utils';
+import { statusMessage } from '@/data/config';
+import { COMMAND, MODE, VOICE_COMMAND } from '@/data/constants';
+import { FeedType, ModeType } from '@/types';
+import { downloadRawLog } from '@/utils';
 
 type UseCommandsProps = {
   // feed

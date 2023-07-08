@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { FEED_ELEMENT_TYPE } from '../data/constants';
-import { FeedElementType, FeedType } from '../types';
-import { generateRandomId } from '../utils';
+import { FEED_ELEMENT_TYPE } from '@/data/constants';
+import { FeedElementType, FeedType } from '@/types';
+import { generateRandomId } from '@/utils';
 
 function generateFeedElement({
   ...feedElement

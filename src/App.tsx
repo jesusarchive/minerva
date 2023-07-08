@@ -1,17 +1,17 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 
-import Feed from './components/feed';
-import StatusBar from './components/status-bar';
-import { aiUser, chatWindow, network } from './data/config';
-import { COMMAND, COMMAND_PREFIX, FEED_ELEMENT_TYPE, USER_TYPE } from './data/constants';
-import useAi from './hooks/use-ai';
-import useChannel from './hooks/use-channel';
-import useCommands from './hooks/use-commands';
-import useFeed from './hooks/use-feed';
-import useUser from './hooks/use-user';
-import useVoice from './hooks/use-voice';
-import { getTimeString } from './utils';
+import Feed from '@/components/feed';
+import StatusBar from '@/components/status-bar';
+import { aiUser, chatWindow, network } from '@/data/config';
+import { COMMAND, COMMAND_PREFIX, FEED_ELEMENT_TYPE, USER_TYPE } from '@/data/constants';
+import useAi from '@/hooks/use-ai';
+import useChannel from '@/hooks/use-channel';
+import useCommands from '@/hooks/use-commands';
+import useFeed from '@/hooks/use-feed';
+import useUser from '@/hooks/use-user';
+import useVoice from '@/hooks/use-voice';
+import { getTimeString } from '@/utils';
 
 export default function App() {
   const { chain } = useAi();

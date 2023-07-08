@@ -11,9 +11,9 @@ module.exports = {
   plugins: ['simple-import-sort', 'import', 'unused-imports', 'react-refresh'],
   settings: {
     'import/resolver': {
-      node: {
-        paths: ['src'],
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      typescript: {},
+      alias: {
+        map: [['@', './src']],
       },
     },
   },
