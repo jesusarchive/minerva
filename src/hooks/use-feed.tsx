@@ -4,7 +4,7 @@ import { FEED_ELEMENT_TYPE } from '../data/constants';
 import { FeedElementType, FeedType } from '../types';
 import { generateRandomId } from '../utils';
 
-export function generateFeedElement({
+function generateFeedElement({
   ...feedElement
 }: Omit<FeedElementType, 'id' | 'date'>): FeedElementType {
   return {
@@ -23,7 +23,7 @@ function generateFeedMessageElement({
   });
 }
 
-function generateFeedStatusElement(text: string): FeedElementType {
+function generateFeedStatusElement({ text }: { text: string }): FeedElementType {
   return generateFeedElement({
     type: FEED_ELEMENT_TYPE.STATUS,
     text,
@@ -34,9 +34,16 @@ export default function useFeed() {
   const [feed, setFeed] = useState<FeedType>([]);
   const [rawFeed, setRawFeed] = useState<FeedType>([]);
 
+  // generic for feed element with more params
   const addFeedElement = (el: FeedElementType) => {
     setFeed([...feed, el]);
     setRawFeed([...rawFeed, el]);
+  };
+
+  // simple for status messages
+  const addFeedStatusElement = (text: string) => {
+    const feedElement = generateFeedStatusElement({ text });
+    addFeedElement(feedElement);
   };
 
   const clearFeed = () => {
@@ -47,8 +54,8 @@ export default function useFeed() {
     feed,
     rawFeed,
     addFeedElement,
+    addFeedStatusElement,
     clearFeed,
     generateFeedMessageElement,
-    generateFeedStatusElement,
   };
 }

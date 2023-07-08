@@ -3,11 +3,14 @@ export const FEED_ELEMENT_TYPE = {
   MESSAGE: 'MESSAGE',
 } as const;
 
-// User and channel modes
-// For now is only used to differentiate between normal users and AI users
-export const MODE = {
-  NORMAL: 'NORMAL',
+export const USER_TYPE = {
+  USER: 'USER',
   AI: 'AI',
+} as const;
+
+export const MODE = {
+  TEXT: 'TEXT',
+  VOICE: 'VOICE',
 } as const;
 
 // COMMANDS

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { defaultAiTemperature } from '../data/config';
 
 export default function useAi(temperature = defaultAiTemperature) {
-  const [ai, setAi] = useState<ConversationChain | null>(null);
+  const [chain, setChain] = useState<ConversationChain | null>(null);
 
   useEffect(() => {
     const model = new OpenAI({
@@ -14,10 +14,10 @@ export default function useAi(temperature = defaultAiTemperature) {
       temperature,
     });
     const memory = new BufferMemory();
-    const chain = new ConversationChain({ llm: model, memory });
+    const conversationChain = new ConversationChain({ llm: model, memory });
 
-    setAi(chain);
+    setChain(conversationChain);
   }, [temperature]);
 
-  return ai;
+  return { chain };
 }

@@ -1,8 +1,11 @@
-import { FEED_ELEMENT_TYPE } from './data/constants';
+import { FEED_ELEMENT_TYPE, MODE, USER_TYPE } from './data/constants';
+
+export type ModeType = (typeof MODE)[keyof typeof MODE];
 
 export type UserType = {
+  type: (typeof USER_TYPE)[keyof typeof USER_TYPE];
   nick: string;
-  mode: string;
+  mode?: ModeType;
 };
 
 export type WindowType = {
@@ -16,7 +19,7 @@ export type NetworkType = {
 
 export type ChannelType = {
   name: string;
-  mode: string;
+  mode: ModeType;
 };
 
 export type FeedElementType = {
