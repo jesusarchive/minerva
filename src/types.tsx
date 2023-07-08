@@ -20,6 +20,7 @@ export type NetworkType = {
 export type ChannelType = {
   name: string;
   mode: ModeType;
+  topic: string;
 };
 
 export type FeedElementType = {

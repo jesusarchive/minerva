@@ -19,7 +19,6 @@ export const aiUser = {
 
 export const chatWindow = {
   id: 1,
-  topic: 'Minerva chat v0.0.1 - localhost',
 };
 
 export const network = {
@@ -29,6 +28,7 @@ export const network = {
 export const channel = {
   name: 'chat',
   mode: MODE.TEXT,
+  topic: 'The robots are taking over!',
 };
 
 export const statusMessage = {

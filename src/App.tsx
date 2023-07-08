@@ -3,43 +3,39 @@ import React, { useEffect, useState } from 'react';
 
 import Feed from './components/feed';
 import StatusBar from './components/status-bar';
-import { aiUser, channel, chatWindow, network, newUser, statusMessage } from './data/config';
-import {
-  COMMAND,
-  COMMAND_PREFIX,
-  FEED_ELEMENT_TYPE,
-  USER_TYPE,
-  VOICE_COMMAND,
-} from './data/constants';
+import { aiUser, chatWindow, network } from './data/config';
+import { COMMAND, COMMAND_PREFIX, FEED_ELEMENT_TYPE, USER_TYPE } from './data/constants';
 import useAi from './hooks/use-ai';
+import useChannel from './hooks/use-channel';
+import useCommands from './hooks/use-commands';
 import useFeed from './hooks/use-feed';
+import useUser from './hooks/use-user';
 import useVoice from './hooks/use-voice';
-import { UserType } from './types';
-import { downloadRawLog, getTimeString } from './utils';
+import { getTimeString } from './utils';
 
 export default function App() {
   const { chain } = useAi();
-  const {
-    feed,
-    rawFeed,
-    addFeedElement,
+  const { feed, addFeedElement, generateFeedMessageElement, ...feedHelpers } = useFeed();
+  const { addFeedStatusElement } = feedHelpers;
+  const { voiceActive, speak, ...voiceHelpers } = useVoice({ addFeedStatusElement });
+  const { channel, ...channelHelpers } = useChannel({
     addFeedStatusElement,
-    clearFeed,
-    generateFeedMessageElement,
-  } = useFeed();
-  const { speak } = useVoice();
+  });
+  const { user, ...userHelpers } = useUser({ addFeedStatusElement });
+  const { isCommand, executeCommand } = useCommands({
+    ...feedHelpers,
+    ...userHelpers,
+    ...channelHelpers,
+    ...voiceHelpers,
+  });
   const clock = getTimeString();
-  const [user, setUser] = useState<UserType>(newUser);
   const [userInput, setUserInput] = useState<string>('');
-  const [voiceActive, setVoiceActive] = useState<boolean>(false);
-
-  const welcome = () => {
-    addFeedStatusElement(statusMessage.welcome);
-  };
 
   const init = () => {
-    clearFeed();
-    welcome();
+    // TODO: Review not clearing feed on rerender
+    executeCommand(`${COMMAND_PREFIX}${COMMAND.CLEAR}`);
+    // show welcome message
+    executeCommand(`${COMMAND_PREFIX}${COMMAND.MOTD}`);
   };
 
   const interact = async (message: string) => {
@@ -49,7 +45,9 @@ export default function App() {
         user: aiUser,
         text: data.response,
       });
+
       addFeedElement(feedElement);
+
       if (voiceActive) {
         speak(data.response);
       }
@@ -73,127 +71,28 @@ export default function App() {
     setUserInput('');
   };
 
-  // COMMAND HANDLERS
-  const changeNick = (command: string) => {
-    const nick = command.split(' ')[1];
-    setUser({ ...user, nick });
-    const feedbackText = `${user.nick} is now known as ${nick}`;
-    addFeedStatusElement(feedbackText);
-  };
-
-  const help = () => {
-    addFeedStatusElement(statusMessage.help);
-  };
-
-  const info = () => {
-    addFeedStatusElement(statusMessage.info);
-  };
-
-  const rawLog = () => {
-    downloadRawLog(rawFeed);
-    addFeedStatusElement(statusMessage.rawLogDownloaded);
-  };
-
-  const topic = () => {
-    // TODO
-  };
-
-  const commandNotFound = (fullCommand: string) => {
-    const feedbackText = `${statusMessage.commandNotFound}: ${fullCommand}`;
-    addFeedStatusElement(feedbackText);
-  };
-
-  const activateVoice = (args: string) => {
-    setVoiceActive(true);
-    const feedbackText = `${statusMessage.voiceActive} ${args}`;
-    addFeedStatusElement(feedbackText);
-    // TODO: update modes to voice
-    // Differentiate between user and channel modes, when channel mode is voice we use the speak function, when user mode is voice we use the listen function for voice recognition
-  };
-
-  const deactivateVoice = (args: string) => {
-    setVoiceActive(false);
-    const feedbackText = `${statusMessage.voiceActive} ${args}`;
-    addFeedStatusElement(feedbackText);
-    // TODO: update modes to voice
-  };
-
-  const voiceCommandFns = {
-    [VOICE_COMMAND.ON]: activateVoice,
-    [VOICE_COMMAND.OFF]: deactivateVoice,
-  };
-
-  const voice = (fullCommand: string) => {
-    const args = fullCommand.split(' ')[1].toUpperCase();
-    const voiceCommandFn = voiceCommandFns[args];
-    if (voiceCommandFn) {
-      voiceCommandFn(args);
-      // TODO: extend for other voice commands like volume, speed, etc.
-      const feedbackText = `${statusMessage.voiceActive} ${args}`;
-      addFeedStatusElement(feedbackText);
-    } else {
-      commandNotFound(fullCommand);
-    }
-  };
-
-  const quit = () => {
-    // TODO: add some functionality to quit
-    addFeedStatusElement(statusMessage.goodbye);
-  };
-
-  const commandFns = {
-    [COMMAND.CLEAR]: clearFeed,
-    [COMMAND.HELP]: help,
-    [COMMAND.INFO]: info,
-    [COMMAND.MOTD]: welcome,
-    [COMMAND.NICK]: changeNick,
-    [COMMAND.RAWLOG]: rawLog,
-    [COMMAND.RESTART]: window.location.reload,
-    [COMMAND.TOPIC]: topic,
-    [COMMAND.VOICE]: voice,
-    [COMMAND.QUIT]: quit,
-  };
-
-  // USER INPUT HANDLERS
-  const handleUserCommand = (fullCommand: string) => {
-    // get command name and remove prefix (/)
-    const commandName = fullCommand.split(' ')[0].slice(1).toUpperCase();
-    const commandFn = commandFns[commandName];
-    if (commandFn) {
-      // TODO: Review passing parameters if the function does not need them
-      commandFn(fullCommand);
-    } else {
-      commandNotFound(fullCommand);
-    }
-    clearUserInput();
-  };
-
   const handleUserText = (text: string) => {
     const feedElement = generateFeedMessageElement({
       user,
       text,
     });
     addFeedElement(feedElement);
-    clearUserInput();
   };
 
   const handleUserInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(event.target.value);
   };
 
-  const handleUserInputSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleUserInputSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const isCommand = userInput && userInput.startsWith(COMMAND_PREFIX);
-    const isMessage = userInput && !isCommand;
-    if (isCommand) {
-      handleUserCommand(userInput);
 
-      return;
-    }
-    if (isMessage) {
-      handleUserText(userInput);
-
-      return;
+    if (userInput) {
+      if (isCommand(userInput)) {
+        executeCommand(userInput);
+      } else {
+        handleUserText(userInput);
+      }
+      clearUserInput();
     }
   };
 
@@ -210,7 +109,7 @@ export default function App() {
     <article className="h-screen w-full flex flex-col bg-white dark:bg-black dark:text-white font-mono">
       {/* ROOT STATUS BAR */}
       <StatusBar>
-        <span>{chatWindow.topic}</span>
+        <span>{channel.topic}</span>
       </StatusBar>
 
       {/* AREA SHOWING CHAT AND STATUS MESSAGES */}
