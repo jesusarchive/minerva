@@ -1,4 +1,4 @@
-import { FEED_ELEMENT_TYPE } from './constants';
+import { FEED_ELEMENT_TYPE } from './data/constants';
 
 export type UserType = {
   nick: string;

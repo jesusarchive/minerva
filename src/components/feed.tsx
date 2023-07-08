@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { FEED_ELEMENT_TYPE } from '../constants';
-import { getTimeString } from '../helpers';
+import { FEED_ELEMENT_TYPE } from '../data/constants';
 import { FeedType } from '../types';
+import { getTimeString } from '../utils';
 
 type FeedProps = {
   feed: FeedType;

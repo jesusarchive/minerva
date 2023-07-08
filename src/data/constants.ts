@@ -44,6 +44,3 @@ export const VOICE_COMMAND = {
   // Deactivates the voice mode
   OFF: 'OFF',
 };
-
-export const MINERVA = 'Minerva';
-export const DEFAULT_USER_NICK = 'Anonymous';
