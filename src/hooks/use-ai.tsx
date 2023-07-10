@@ -3,9 +3,9 @@ import { OpenAI } from 'langchain/llms/openai';
 import { BufferMemory } from 'langchain/memory';
 import { useEffect, useState } from 'react';
 
-import { defaultAiTemperature } from '@/data/config';
+import { defaultAiTemperature } from '@/config/config';
 
-export default function useAi(temperature = defaultAiTemperature) {
+export default function useAI(temperature = defaultAiTemperature) {
   const [chain, setChain] = useState<ConversationChain | null>(null);
 
   useEffect(() => {

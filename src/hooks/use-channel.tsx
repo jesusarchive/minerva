@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { channel } from '@/data/config';
-import { ChannelType, ModeType } from '@/types';
+import { channel } from '@/config/config';
+import { ChannelType, ModeType } from '@/types/types';
 
 type UseChannelProps = {
   defaultChannel?: ChannelType;

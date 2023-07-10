@@ -1,4 +1,4 @@
-import { COMMAND, MODE, USER_TYPE } from './constants';
+import { COMMAND, MODE, USER_TYPE } from '@/config/constants';
 
 export const minerva = 'Minerva';
 

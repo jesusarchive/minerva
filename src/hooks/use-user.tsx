@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { newUser } from '@/data/config';
-import { ModeType, UserType } from '@/types';
+import { newUser } from '@/config/config';
+import { ModeType, UserType } from '@/types/types';
 
 type UseUserProps = {
   defaultUser?: UserType;
