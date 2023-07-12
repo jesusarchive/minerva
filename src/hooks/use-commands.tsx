@@ -10,25 +10,25 @@ type UseCommandsProps = {
   addFeedStatusElement: (text: string) => void;
   // user
   setUserNick: (nick: string) => void;
+  setUserMode: (mode: ModeType) => void;
   // channel
   setChannelName: (name: string) => void;
   setChannelTopic: (topic: string) => void;
   setChannelMode: (mode: ModeType) => void;
   // voice
-  activateVoice: () => void;
-  deactivateVoice: () => void;
+  setVoiceActiveState: (active: boolean) => void;
 };
 
 export default function useCommands({
   rawFeed,
   clearFeed,
   setUserNick,
+  setUserMode,
   setChannelName,
   setChannelTopic,
   setChannelMode,
   addFeedStatusElement,
-  activateVoice,
-  deactivateVoice,
+  setVoiceActiveState,
 }: UseCommandsProps) {
   const isCommand = (text = '') => text.startsWith('/');
 
@@ -50,17 +50,19 @@ export default function useCommands({
 
   const voiceCommandFns = {
     [VOICE_COMMAND.ON]: () => {
-      activateVoice();
+      setVoiceActiveState(true);
       setChannelMode(MODE.VOICE);
+      setUserMode(MODE.VOICE);
     },
     [VOICE_COMMAND.OFF]: () => {
-      deactivateVoice();
+      setVoiceActiveState(false);
       setChannelMode(MODE.TEXT);
+      setUserMode(MODE.VOICE);
     },
   };
 
   const voice = (args: string[]) => {
-    const voiceCommandFn = voiceCommandFns[args[0].toUpperCase()];
+    const voiceCommandFn = voiceCommandFns[args[0].toUpperCase() as VOICE_COMMAND];
 
     if (voiceCommandFn) {
       voiceCommandFn();
@@ -94,7 +96,7 @@ export default function useCommands({
     const [commandName, ...args] = fullCommand.split(' ');
     // remove prefix
     const formattedCommandName = commandName.slice(1).toUpperCase();
-    const commandFn = commandFns[formattedCommandName];
+    const commandFn = commandFns[formattedCommandName as COMMAND];
 
     if (commandFn) {
       commandFn(args);

@@ -1,4 +1,4 @@
-import { COMMAND, MODE, USER_TYPE } from '@/config/constants';
+import { COMMAND, COMMAND_PREFIX, MODE, USER_TYPE } from './constants';
 
 export const minerva = 'Minerva';
 
@@ -37,7 +37,9 @@ export const statusMessage = {
   goodbye: 'Goodbye! I hope to see you again soon.',
   commandNotFound: 'Command not found.',
   info: "Minerva is an AI chatbot that you can talk to developed with GPT-3's Davinci engine.",
-  help: `Available commands: ${Object.values(COMMAND).join(', ')}`,
+  help: `Available commands: ${Object.values(COMMAND)
+    .map((command) => `${COMMAND_PREFIX}${command}`)
+    .join(', ')}`,
   rawLogDownloaded: 'Raw log downloaded.',
   voiceActive: 'Voice is now',
 };

@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Feed from '@/components/feed';
 import StatusBar from '@/components/status-bar';
@@ -17,7 +17,8 @@ export default function App() {
   const { chain } = useAI();
   const { feed, addFeedElement, generateFeedMessageElement, ...feedHelpers } = useFeed();
   const { addFeedStatusElement } = feedHelpers;
-  const { voiceActive, speak, ...voiceHelpers } = useVoice({ addFeedStatusElement });
+  const [voiceActiveState, setVoiceActiveState] = useState<boolean>(false);
+  const { speak, listen, listening, stopListening, transcript, finalTranscript } = useVoice();
   const { channel, ...channelHelpers } = useChannel({
     addFeedStatusElement,
   });
@@ -26,16 +27,16 @@ export default function App() {
     ...feedHelpers,
     ...userHelpers,
     ...channelHelpers,
-    ...voiceHelpers,
+    setVoiceActiveState,
   });
   const clock = getTimeString();
   const [userInput, setUserInput] = useState<string>('');
 
   const init = () => {
-    // TODO: Review not clearing feed on rerender
+    // TODO: review not executing all commands on init, addFeedStatusElement not adding elements to feed
     executeCommand(`${COMMAND_PREFIX}${COMMAND.CLEAR}`);
-    // show welcome message
     executeCommand(`${COMMAND_PREFIX}${COMMAND.MOTD}`);
+    executeCommand(`${COMMAND_PREFIX}${COMMAND.HELP}`);
   };
 
   const interact = async (message: string) => {
@@ -48,8 +49,8 @@ export default function App() {
 
       addFeedElement(feedElement);
 
-      if (voiceActive) {
-        speak(data.response);
+      if (voiceActiveState) {
+        await speak(data.response, { lang: 'es-ES' });
       }
     }
   };
@@ -84,7 +85,8 @@ export default function App() {
   };
 
   const handleUserInputSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    console.log('handleUserInputSubmit', userInput);
+    event?.preventDefault?.();
 
     if (userInput) {
       if (isCommand(userInput)) {
@@ -96,14 +98,46 @@ export default function App() {
     }
   };
 
+  const timeoutRef = useRef<any>();
+
+  const handleListenStart = () => {
+    listen({ lang: 'es-ES' });
+  };
+
+  const handleListenStop = () => {
+    stopListening();
+    clearTimeout(timeoutRef.current);
+  };
+
+  const handleListenHold = () => {
+    timeoutRef.current = setTimeout(() => {
+      handleListenStop();
+    }, 5000);
+  };
+
   // EFFECTS
   useEffect(() => {
     init();
   }, []);
 
   useEffect(() => {
-    handleFeedChange();
+    (async () => {
+      await handleFeedChange();
+    })();
   }, [feed]);
+
+  useEffect(() => {
+    if (voiceActiveState && transcript) {
+      console.log('transcript', transcript);
+      setUserInput(transcript);
+    }
+  }, [transcript]);
+
+  useEffect(() => {
+    if (voiceActiveState && finalTranscript) {
+      handleUserInputSubmit(null);
+    }
+  }, [finalTranscript]);
 
   return (
     <article className="h-screen w-full flex flex-col bg-white dark:bg-black dark:text-white font-mono">
@@ -135,6 +169,23 @@ export default function App() {
       {/* USER INPUT */}
       <div className="flex space-x-2">
         <span>{`[#${channel.name}]`}</span>
+        {voiceActiveState && (
+          <button
+            className="flex w-52  "
+            onMouseDown={handleListenStart}
+            onMouseUp={handleListenStop}
+            onMouseLeave={handleListenStop}
+            onTouchStart={handleListenStart}
+            onTouchEnd={handleListenStop}
+            onTouchCancel={handleListenStop}
+            onTouchMove={handleListenHold}
+          >
+            <span>{listening ? 'Listening...' : 'Hold to Listen'}</span>
+          </button>
+        )}
+        {/* <button onClick={handleListenStart}>Start</button>
+        <button onClick={handleListenStop}>Stop</button>
+        <p> {listening ? 'Listening...' : ''}</p> */}
         <form className="w-full" onSubmit={handleUserInputSubmit}>
           <input
             className="bg-inherit w-full caret-pink-500"

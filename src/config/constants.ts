@@ -19,13 +19,13 @@ export enum COMMAND {
   CLEAR = 'CLEAR',
   HELP = 'HELP',
   INFO = 'INFO',
-  NICK = 'NICK',
   MOTD = 'MOTD',
+  NICK = 'NICK',
+  QUIT = 'QUIT',
   RAWLOG = 'RAWLOG',
   RESTART = 'RESTART',
   TOPIC = 'TOPIC',
   VOICE = 'VOICE',
-  QUIT = 'QUIT',
 }
 
 export enum VOICE_COMMAND {

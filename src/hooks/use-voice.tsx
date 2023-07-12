@@ -1,53 +1,117 @@
 import { useEffect, useState } from 'react';
 
-import { statusMessage } from '@/config/config';
-
-type UseVoiceProps = {
-  defaultVoiceActive?: boolean;
+type SpeakConfig = {
   lang?: string;
-  addFeedStatusElement: (text: string) => void;
+  pitch?: number;
+  rate?: number;
+  volume?: number;
 };
 
-export default function useVoice({
-  defaultVoiceActive = false,
-  lang = 'en-US',
-  addFeedStatusElement,
-}: UseVoiceProps) {
-  const [voiceActive, setVoiceActive] = useState<boolean>(defaultVoiceActive);
-  const [utterance, setUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+type ListenConfig = {
+  lang?: string;
+};
+
+type Result = {
+  transcript: string;
+  isFinal: boolean;
+};
+
+type VoiceHook = {
+  speak: (text: string, config?: Config) => Promise<SpeechSynthesisUtterance>;
+  listen: (config?: Config) => void;
+  listening: boolean;
+  transcript: string;
+  finalTranscript: string;
+  stopListening: () => void;
+};
+
+const useVoice = (): VoiceHook => {
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition>();
+  const [result, setResult] = useState<Result>({ transcript: '', isFinal: false });
+  const [listening, setListening] = useState(false);
+  const [finalTranscript, setFinalTranscript] = useState('');
+
+  const getVoices = async () => {
+    const voices = await new Promise<SpeechSynthesisVoice[]>((resolve) => {
+      const voices = speechSynthesis.getVoices();
+      if (voices.length) {
+        resolve(voices);
+      }
+      speechSynthesis.onvoiceschanged = () => resolve(speechSynthesis.getVoices());
+    });
+    setVoices(voices);
+  };
 
   useEffect(() => {
-    const utterance = new SpeechSynthesisUtterance();
-    utterance.lang = lang;
-    setUtterance(utterance);
-  }, [lang]);
+    getVoices();
+  }, []);
 
-  const speak = (text: string) => {
-    if (utterance) {
-      utterance.text = text;
-      window.speechSynthesis.speak(utterance);
-    }
+  const speak = async (text: string, config?: SpeakConfig) => {
+    const speech = new SpeechSynthesisUtterance(text);
+    const lang = config?.lang || navigator.language || 'en-US';
+
+    speech.voice = (voices.filter((v) => v.lang === lang) || voices)[0];
+    speech.rate = config?.rate || 0.8;
+
+    return new Promise<SpeechSynthesisUtterance>((resolve) => {
+      speech.onend = () => resolve(speech);
+      speechSynthesis.speak(speech);
+    });
   };
 
-  const activateVoice = () => {
-    setVoiceActive(true);
-    const feedbackText = `${statusMessage.voiceActive} on`;
-    addFeedStatusElement(feedbackText);
-    // TODO: update modes to voice
-    // Differentiate between user and channel modes, when channel mode is voice we use the speak function, when user mode is voice we use the listen function for voice recognition
+  const listen = (config: ListenConfig): void => {
+    console.log(config);
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = config.lang || navigator.language || 'en-US';
+
+    recognition.onstart = () => {
+      setListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const isFinal = result.isFinal;
+        const transcript = result[0].transcript;
+
+        if (isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      setResult({ transcript: finalTranscript || interimTranscript, isFinal: false });
+      setFinalTranscript(finalTranscript);
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+    };
+
+    recognition.start();
+
+    setSpeechRecognition(recognition);
   };
 
-  const deactivateVoice = () => {
-    setVoiceActive(false);
-    const feedbackText = `${statusMessage.voiceActive} off`;
-    addFeedStatusElement(feedbackText);
-    // TODO: update modes to voice
+  const stopListening = (): void => {
+    speechRecognition?.stop();
   };
 
   return {
-    voiceActive,
-    activateVoice,
-    deactivateVoice,
     speak,
+    listen,
+    listening,
+    transcript: result.transcript,
+    finalTranscript,
+    stopListening,
   };
-}
+};
+
+export default useVoice;

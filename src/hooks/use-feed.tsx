@@ -30,6 +30,7 @@ function generateFeedStatusElement({ text }: { text: string }): FeedElementType 
   });
 }
 
+// TODO: review to change to context
 export default function useFeed() {
   const [feed, setFeed] = useState<FeedType>([]);
   const [rawFeed, setRawFeed] = useState<FeedType>([]);
